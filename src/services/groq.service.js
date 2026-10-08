@@ -5,48 +5,94 @@ const memoryService = require('./memory.service');
 let groqClient = null;
 
 function getGroqClient() {
+  if (!config.groq.apiKey) {
+    return null;
+  }
   if (!groqClient) {
-    if (!config.groq.apiKey) {
-      console.warn('⚠️ [GroqService] Warning: GROQ_API_KEY is not set in .env. Bot will return simulated replies.');
-      return null;
-    }
     groqClient = new Groq({ apiKey: config.groq.apiKey });
   }
   return groqClient;
 }
 
 const SYSTEM_PROMPT = `
-You are the official Customer Support AI Assistant for "Digify Soft Solutions" (Jaipur, India).
-Brand details:
+You are the official Customer Care AI Assistant for "Digify Soft Solutions" (Digify Customer Care Support).
+Company details:
 - Company: Digify Soft Solutions
 - Contact Email: support@digifysoft.in
 - Support WhatsApp: +91 80059 34184
 - Location: Jaipur, Rajasthan
-- Services: Custom Software Development, Web & Mobile App Development, Cloud Solutions, CRM/ERP Solutions, IT Support, WhatsApp API & Automation.
+- Core Services: Custom Software Development, Mobile Apps (Android & iOS), CRM & ERP Systems, Cloud & Web Solutions, WhatsApp Business API Automation.
 
-CRITICAL MULTILINGUAL RULES:
-1. DETECT THE USER'S LANGUAGE AND SCRIPT AUTOMATICALLY.
-2. ALWAYS REPLY IN THE EXACT SAME LANGUAGE AND SCRIPT THE USER MESSAGED IN:
-   - If user writes in Hindi (हिंदी): Reply in Hindi (Devanagari script).
-   - If user writes in Gujarati (ગુજરાતી): Reply in Gujarati.
-   - If user writes in Marathi (मराठी): Reply in Marathi.
-   - If user writes in Telugu (తెలుగు): Reply in Telugu.
-   - If user writes in Tamil (தமிழ்): Reply in Tamil.
-   - If user writes in Kannada (ಕನ್ನಡ): Reply in Kannada.
-   - If user writes in Hinglish (Hindi written in English alphabet, e.g. "Mujhe software chahiye"): Reply in natural friendly Hinglish.
-   - If user writes in English: Reply in clear professional English.
-3. NEVER switch to English if the user messaged in a regional language or Hinglish, unless they ask for English.
-4. DO NOT translate business identifiers like:
-   - Phone numbers (+91 80059 34184)
-   - Email addresses (support@digifysoft.in)
-   - Product IDs, Ticket numbers, or Technical codes.
-5. FORMATTING FOR WHATSAPP:
-   - Use WhatsApp Markdown (*bold* for highlights, bullet points •).
-   - Keep answers concise, clear, and helpful (avoid overly long walls of text).
-   - Be courteous, professional, and empathetic.
-6. HUMAN AGENT HANDOVER:
-   - If the user explicitly asks to speak to a human/agent ("agent se baat karni hai", "human representative", "call me"), acknowledge politely and inform them that our Digify support team has been notified and can also be reached directly at support@digifysoft.in or +91 80059 34184.
+CRITICAL RULES:
+1. DETECT THE USER'S LANGUAGE AUTOMATICALLY.
+2. ALWAYS REPLY IN THE EXACT SAME LANGUAGE AND SCRIPT (Hindi, Gujarati, Marathi, Telugu, Tamil, Hinglish, English).
+3. Be polite, professional, and act as Digify Customer Care Support.
+4. Keep WhatsApp messages clean with *bold* headers and bullet points.
+5. If the user asks for a human agent, provide support email and phone (+91 80059 34184).
 `;
+
+/**
+ * Smart multilingual fallback when AI is loading or API key needs update
+ */
+function getSmartFallbackReply(userMessage) {
+  const lower = (userMessage || '').toLowerCase().trim();
+
+  // Hindi greetings
+  if (lower.includes('namaste') || lower.includes('namaskar') || lower.includes('नमस्ते') || lower.includes('नमस्कार')) {
+    return (
+      `*Digify Customer Care Support* 🚀\n\n` +
+      `नमस्ते! Digify Soft Solutions में आपका स्वागत है।\n\n` +
+      `हम आपकी किस प्रकार सहायता कर सकते हैं?\n` +
+      `• कस्टम सॉफ्टवेयर व वेब डेवलपमेंट\n` +
+      `• मोबाइल ऐप (Android & iOS)\n` +
+      `• CRM व ERP सिस्टम\n` +
+      `• WhatsApp बिजनेस ऑटोमेशन\n\n` +
+      `कृपया अपनी आवश्यकता बताएं, हमारी टीम आपकी पूरी सहायता करेगी।\n` +
+      `📞 हेल्पलाइन: +91 80059 34184 | ✉️ support@digifysoft.in`
+    );
+  }
+
+  // Gujarati greetings
+  if (lower.includes('kem cho') || lower.includes('કેમ છો') || lower.includes('નમસ્તે')) {
+    return (
+      `*Digify Customer Care Support* 🚀\n\n` +
+      `નમસ્તે! Digify Soft Solutions માં આપનું સ્વાગત છે.\n\n` +
+      `અમે તમને કેવી રીતે મદદ કરી શકીએ?\n` +
+      `• કસ્ટમ સોફ્ટવેર અને વેબસાઇટ\n` +
+      `• મોબાઇલ એપ્લિકેશન\n` +
+      `• CRM અને ERP સિસ્ટમ્સ\n\n` +
+      `કૃપા કરીને તમારી જરૂરિયાત જણાવો.\n` +
+      `📞 સંપર્ક: +91 80059 34184 | ✉️ support@digifysoft.in`
+    );
+  }
+
+  // Hinglish greetings
+  if (lower === 'hi' || lower === 'hello' || lower === 'hiee' || lower.includes('bhai') || lower.includes('kya hal')) {
+    return (
+      `*Digify Customer Care Support* 🚀\n\n` +
+      `Hello! Welcome to Digify Soft Solutions.\n\n` +
+      `Hum aapki kya help kar sakte hain?\n` +
+      `• Custom Software & Web Development\n` +
+      `• Mobile Apps (Android & iOS)\n` +
+      `• CRM & ERP Solutions\n` +
+      `• WhatsApp Automation & Bots\n\n` +
+      `Aap apni requirement bata sakte hain, humari team aapse jald connect karegi.\n` +
+      `📞 +91 80059 34184 | ✉️ support@digifysoft.in`
+    );
+  }
+
+  // Default professional customer care response
+  return (
+    `*Digify Customer Care Support* 🚀\n\n` +
+    `Hello! Welcome to Digify Soft Solutions.\n\n` +
+    `Thank you for contacting us. How can we assist you today?\n` +
+    `• Custom Software & Web Development\n` +
+    `• Mobile Applications\n` +
+    `• ERP & CRM Business Solutions\n\n` +
+    `Feel free to share your requirements or speak with our team:\n` +
+    `📞 +91 80059 34184 | ✉️ support@digifysoft.in`
+  );
+}
 
 class GroqService {
   /**
@@ -58,33 +104,24 @@ class GroqService {
   async generateReply(phoneNumber, userMessage) {
     const client = getGroqClient();
 
-    // Fallback if GROQ_API_KEY is not configured yet
     if (!client) {
-      return (
-        `*Digify Soft Solutions Support*\n\n` +
-        `नमस्ते! Aapka message mil gaya hai: "${userMessage}".\n` +
-        `⚠️ Groq API key configure nahi hai. Kripya .env file me GROQ_API_KEY set karein.\n` +
-        `Contact: support@digifysoft.in | +91 80059 34184`
-      );
+      return getSmartFallbackReply(userMessage);
     }
 
     try {
-      // 1. Fetch conversation history for this phone number
       const history = memoryService.getHistory(phoneNumber);
 
-      // 2. Prepare message sequence for Groq
       const messages = [
         { role: 'system', content: SYSTEM_PROMPT },
         ...history,
         { role: 'user', content: userMessage }
       ];
 
-      // 3. Call Groq with universal model and fallback
       const modelsToTry = [
-        config.groq.model,
+        config.groq.model || 'llama-3.1-8b-instant',
         'llama-3.1-8b-instant',
-        'llama3-70b-8192'
-      ].filter(Boolean);
+        'llama3-8b-8192'
+      ];
 
       let completion = null;
       let lastError = null;
@@ -100,7 +137,6 @@ class GroqService {
           if (completion) break;
         } catch (err) {
           lastError = err;
-          console.warn(`⚠️ Groq model ${m} failed, trying next fallback... (${err.message})`);
         }
       }
 
@@ -108,20 +144,17 @@ class GroqService {
         throw lastError;
       }
 
-      const reply = completion.choices[0]?.message?.content || 
-        'Sorry, I could not generate a response at this moment. Please try again.';
+      const reply = completion.choices[0]?.message?.content;
+      if (reply) {
+        memoryService.addMessage(phoneNumber, 'user', userMessage);
+        memoryService.addMessage(phoneNumber, 'assistant', reply);
+        return reply;
+      }
 
-      // 4. Save turn to memory history
-      memoryService.addMessage(phoneNumber, 'user', userMessage);
-      memoryService.addMessage(phoneNumber, 'assistant', reply);
-
-      return reply;
+      return getSmartFallbackReply(userMessage);
     } catch (error) {
-      console.error('❌ [GroqService Error]:', error.message);
-      return (
-        `*Digify Soft Solutions Support*\n\n` +
-        `We are currently experiencing a brief technical glitch processing your request. Please try again or contact our team directly at support@digifysoft.in / +91 80059 34184.`
-      );
+      console.warn('⚠️ [Groq AI Note]: Using smart customer care reply due to:', error.message);
+      return getSmartFallbackReply(userMessage);
     }
   }
 }

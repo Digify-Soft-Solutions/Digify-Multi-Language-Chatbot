@@ -114,21 +114,31 @@ class WebhookController {
 
       const { from: customerPhone, text: customerMessage, senderName } = parsed;
 
-      console.log(`\n💬 [New Message from ${senderName} (${customerPhone})]: "${customerMessage}"`);
+      // Determine the correct customer conversation phone number
+      const botNumber = config.whatsapp.businessNumber.replace(/[^0-9]/g, '');
+      let recipientPhone = customerPhone;
+
+      if (customerPhone === botNumber && req.body.receiver) {
+        recipientPhone = String(req.body.receiver).replace(/[^0-9]/g, '');
+      } else if (req.body.receiver && req.body.receiver !== botNumber) {
+        recipientPhone = String(req.body.receiver).replace(/[^0-9]/g, '');
+      }
+
+      console.log(`\n💬 [New Message from ${senderName} (Customer: ${recipientPhone})]: "${customerMessage}"`);
 
       // 1. Process message through Groq AI (with multi-language detection & translation)
-      const aiReply = await groqService.generateReply(customerPhone, customerMessage);
-      console.log(`🤖 [AI Reply to ${customerPhone}]:\n${aiReply}\n`);
+      const aiReply = await groqService.generateReply(recipientPhone, customerMessage);
+      console.log(`🤖 [AI Reply to ${recipientPhone}]:\n${aiReply}\n`);
 
       // 2. Dispatch response back to WhatsApp via WACloud
-      await wacloudService.sendMessage(customerPhone, aiReply);
+      await wacloudService.sendMessage(recipientPhone, aiReply);
 
       // 3. Return reply directly in webhook response (in case WACloud supports inline response)
       return res.status(200).json({
         status: 'success',
         reply: aiReply,
         message: aiReply,
-        to: customerPhone
+        to: recipientPhone
       });
 
     } catch (error) {

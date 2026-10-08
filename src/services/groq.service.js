@@ -79,13 +79,34 @@ class GroqService {
         { role: 'user', content: userMessage }
       ];
 
-      // 3. Call Groq with Llama 3.3 70B model
-      const completion = await client.chat.completions.create({
-        model: config.groq.model || 'llama-3.3-70b-versatile',
-        messages: messages,
-        temperature: 0.4,
-        max_tokens: 800
-      });
+      // 3. Call Groq with universal model and fallback
+      const modelsToTry = [
+        config.groq.model,
+        'llama-3.1-8b-instant',
+        'llama3-70b-8192'
+      ].filter(Boolean);
+
+      let completion = null;
+      let lastError = null;
+
+      for (const m of modelsToTry) {
+        try {
+          completion = await client.chat.completions.create({
+            model: m,
+            messages: messages,
+            temperature: 0.4,
+            max_tokens: 800
+          });
+          if (completion) break;
+        } catch (err) {
+          lastError = err;
+          console.warn(`⚠️ Groq model ${m} failed, trying next fallback... (${err.message})`);
+        }
+      }
+
+      if (!completion && lastError) {
+        throw lastError;
+      }
 
       const reply = completion.choices[0]?.message?.content || 
         'Sorry, I could not generate a response at this moment. Please try again.';

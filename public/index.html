@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digify Soft Solutions — Multilingual WhatsApp Bot Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #111b2e;
+      --card-border: #1e293b;
+      --primary: #25d366;
+      --primary-hover: #20ba5a;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --wa-chat-bg: #0c1317;
+      --wa-outgoing: #005c4b;
+      --wa-incoming: #202c33;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(17, 27, 46, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #25d366, #128c7e);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(37, 211, 102, 0.1);
+      border: 1px solid rgba(37, 211, 102, 0.3);
+      color: #25d366;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #25d366;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      padding: 24px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+    }
+
+    /* Left Info Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .info-item .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .info-item .value {
+      font-size: 0.9rem;
+      color: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-all;
+    }
+
+    .quick-queries {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quick-btn {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--card-border);
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .quick-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #fff;
+    }
+
+    .lang-tag {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    /* Right WhatsApp Simulator */
+    .chat-container {
+      background: var(--wa-chat-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      height: 720px;
+    }
+
+    .chat-header {
+      background: #202c33;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .chat-user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-avatar {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #25d366, #128c7e);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .chat-user-details h3 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .chat-user-details p {
+      font-size: 0.78rem;
+      color: #8696a0;
+    }
+
+    .messages-area {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .msg {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      position: relative;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: var(--wa-outgoing);
+      color: #e9edef;
+      border-top-right-radius: 2px;
+    }
+
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--wa-incoming);
+      color: #e9edef;
+      border-top-left-radius: 2px;
+    }
+
+    .msg-time {
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      background: var(--wa-incoming);
+      padding: 10px 16px;
+      border-radius: 12px;
+      color: #8696a0;
+      font-size: 0.85rem;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: #8696a0;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .chat-input-bar {
+      background: #202c33;
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: #2a3942;
+      border: none;
+      color: #e9edef;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      padding: 12px 18px;
+      border-radius: 24px;
+      outline: none;
+    }
+
+    .chat-input::placeholder {
+      color: #8696a0;
+    }
+
+    .send-btn {
+      background: #00a884;
+      border: none;
+      color: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .send-btn:hover {
+      background: #02906f;
+    }
+
+    .send-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">D</div>
+      <div class="brand-text">
+        <h1>Digify Soft Solutions</h1>
+        <p>Multilingual WhatsApp Bot Engine (Powered by Groq Llama 3.3)</p>
+      </div>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      Groq Bot Active (+91 80059 34184)
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Configuration & Quick Test Panel -->
+    <div class="card">
+      <h2>⚙️ Webhook & Bot Info</h2>
+      
+      <div class="info-item">
+        <div class="label">WhatsApp Number</div>
+        <div class="value">+91 80059 34184 (Digify)</div>
+      </div>
+
+      <div class="info-item">
+        <div class="label">Webhook Endpoint URL</div>
+        <div class="value" id="webhookUrl">/api/webhook/whatsapp</div>
+      </div>
+
+      <div class="info-item">
+        <div class="label">AI Model</div>
+        <div class="value">Groq (llama-3.3-70b-versatile)</div>
+      </div>
+
+      <div class="info-item">
+        <div class="label">WACloud Dashboard</div>
+        <div class="value">wacloud.innuvissolutions.com</div>
+      </div>
+
+      <h2>🌐 Test Multilingual Queries</h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">Click any sample below to test how the bot responds in the exact same language:</p>
+
+      <div class="quick-queries">
+        <button class="quick-btn" onclick="sendQuick('नमस्ते, मुझे अपनी कंपनी के लिए एक CRM सॉफ्टवेयर बनवाना है, क्या जानकारी चाहिए?')">
+          <span>नमस्ते, मुझे CRM बनवाना है...</span>
+          <span class="lang-tag">Hindi</span>
+        </button>
+
+        <button class="quick-btn" onclick="sendQuick('નમસ્તે, મારે એક ઇ-કોમર્સ વેબસાઇટ બનાવવી છે. મને વિગતો આપો.')">
+          <span>નમસ્તે, મારે એક વેબસાઇટ...</span>
+          <span class="lang-tag">Gujarati</span>
+        </button>
+
+        <button class="quick-btn" onclick="sendQuick('Bhaiya mujhe WhatsApp marketing automation bot chahiye, price kya hoga?')">
+          <span>Bhaiya mujhe WhatsApp bot...</span>
+          <span class="lang-tag">Hinglish</span>
+        </button>
+
+        <button class="quick-btn" onclick="sendQuick('नमस्कार, मला माझ्या दुकानासाठी बिलिंग सॉफ्टवेअर पाहिजे आहे.')">
+          <span>नमस्कार, बिलिंग सॉफ्टवेअर...</span>
+          <span class="lang-tag">Marathi</span>
+        </button>
+
+        <button class="quick-btn" onclick="sendQuick('హలో, మీ సాఫ్ట్‌వేర్ సేవల గురించి మరింత తెలుసుకోవాలనుకుంటున్నాను.')">
+          <span>హలో, మీ సాఫ్ట్‌వేర్ సేవల...</span>
+          <span class="lang-tag">Telugu</span>
+        </button>
+
+        <button class="quick-btn" onclick="sendQuick('Hi, what are Digify Soft Solutions core services and working hours?')">
+          <span>Hi, what are Digify core services...</span>
+          <span class="lang-tag">English</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Live WhatsApp Simulator -->
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-user-info">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-user-details">
+            <h3>Digify Support Bot</h3>
+            <p>+91 80059 34184 • Official Support</p>
+          </div>
+        </div>
+        <span style="font-size: 0.8rem; color: #00a884; font-weight: 600;">● Online</span>
+      </div>
+
+      <div class="messages-area" id="messagesArea">
+        <div class="msg bot">
+          *Digify Soft Solutions Customer Support* 🚀
+          
+नमस्ते! Welcome to Digify Soft Solutions.
+Aap hume kisi bhi language me message kar sakte hain:
+• Hindi (हिंदी)
+• Gujarati (ગુજરાતી)
+• Marathi (मराठी)
+• Telugu (తెలుగు)
+• Tamil (தமிழ்)
+• Hinglish ya English
+
+Aapki kya sahayata kar sakte hain?
+          <div class="msg-time">Just now</div>
+        </div>
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator">
+        <span>Digify Bot is typing</span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+
+      <form class="chat-input-bar" id="chatForm" onsubmit="handleSend(event)">
+        <input 
+          type="text" 
+          id="userInput" 
+          class="chat-input" 
+          placeholder="Type in any language (Hindi, Gujarati, English...)" 
+          autocomplete="off"
+        />
+        <button type="submit" class="send-btn" title="Send">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('webhookUrl').innerText = window.location.origin + '/api/webhook/whatsapp';
+
+    const messagesArea = document.getElementById('messagesArea');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const userInput = document.getElementById('userInput');
+
+    function getTime() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function appendMessage(text, type) {
+      const div = document.createElement('div');
+      div.className = `msg ${type}`;
+      div.innerText = text;
+      
+      const timeSpan = document.createElement('div');
+      timeSpan.className = 'msg-time';
+      timeSpan.innerText = getTime();
+      div.appendChild(timeSpan);
+
+      messagesArea.appendChild(div);
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    async function sendQuery(text) {
+      if (!text || text.trim() === '') return;
+
+      appendMessage(text, 'user');
+      userInput.value = '';
+      typingIndicator.style.display = 'flex';
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+
+      try {
+        const res = await fetch('/api/webhook/test/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, phone: '918005934184' })
+        });
+        const data = await res.json();
+        typingIndicator.style.display = 'none';
+
+        if (data.botReply) {
+          appendMessage(data.botReply, 'bot');
+        } else {
+          appendMessage('Sorry, no response received.', 'bot');
+        }
+      } catch (err) {
+        typingIndicator.style.display = 'none';
+        appendMessage('⚠️ Error connecting to server: ' + err.message, 'bot');
+      }
+    }
+
+    function handleSend(e) {
+      e.preventDefault();
+      const val = userInput.value;
+      sendQuery(val);
+    }
+
+    function sendQuick(txt) {
+      sendQuery(txt);
+    }
+  </script>
+</body>
+</html>

@@ -5,14 +5,13 @@ const config = require('../config');
 class WebhookController {
   /**
    * GET /api/webhook/whatsapp
-   * Webhook verification (for platforms like Meta or WACloud verification challenge)
+   * Webhook verification
    */
   async verifyWebhook(req, res) {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    // Standard Meta verification check
     if (mode && token) {
       if (mode === 'subscribe' && token === config.whatsapp.verifyToken) {
         console.log('✅ Webhook verified successfully via hub.challenge!');
@@ -23,7 +22,6 @@ class WebhookController {
       }
     }
 
-    // Default friendly verification
     return res.status(200).json({
       status: 'active',
       message: 'Digify Soft Solutions WhatsApp Webhook endpoint is running and ready!',
@@ -47,7 +45,6 @@ class WebhookController {
       const entry = body.entry?.[0];
       const change = entry?.changes?.[0]?.value;
 
-      // Check if it's a delivery status update (sent/delivered/read)
       if (change?.statuses && change.statuses.length > 0) {
         return { isStatusUpdate: true };
       }
@@ -72,9 +69,16 @@ class WebhookController {
 
     // Check 2: Direct WACloud SaaS / Innuvis schema
     if (!text) {
-      from = body.from || body.phone || body.sender || body.data?.from || body.data?.phone;
-      text = body.message || body.text || body.body || body.data?.message || body.data?.body;
-      senderName = body.name || body.pushName || body.data?.pushName || senderName;
+      from = body.from || body.sender_id || body.phone || body.sender || body.data?.from;
+
+      // In WACloud, text can be an object: "text": { "body": "Hiee" }
+      if (typeof body.text === 'object' && body.text !== null && body.text.body) {
+        text = body.text.body;
+      } else {
+        text = body.message || body.text || body.body || body.data?.message || body.data?.body;
+      }
+
+      senderName = body.display_name || body.name || body.pushName || body.data?.pushName || senderName;
     }
 
     if (!from || !text) {
@@ -95,30 +99,20 @@ class WebhookController {
     try {
       console.log('📥 [Incoming Webhook Payload]:', JSON.stringify(req.body, null, 2));
 
-      // Respond 200 OK immediately to satisfy webhook timeout requirements
-      res.status(200).json({ status: 'received' });
-
       // Extract message details
       const parsed = this.extractMessageData(req.body);
 
       if (!parsed) {
         console.log('ℹ️ Payload received but no actionable customer text found (e.g., status update or media).');
-        return;
+        return res.status(200).json({ status: 'received' });
       }
 
       if (parsed.isStatusUpdate) {
         console.log('ℹ️ Delivery status update received.');
-        return;
+        return res.status(200).json({ status: 'status_acknowledged' });
       }
 
       const { from: customerPhone, text: customerMessage, senderName } = parsed;
-
-      // Ignore messages sent by our own bot number to avoid infinite loops
-      const cleanBotNumber = config.whatsapp.businessNumber.replace(/[^0-9]/g, '');
-      if (customerPhone === cleanBotNumber) {
-        console.log('ℹ️ Ignoring message from our own bot number.');
-        return;
-      }
 
       console.log(`\n💬 [New Message from ${senderName} (${customerPhone})]: "${customerMessage}"`);
 
@@ -129,9 +123,16 @@ class WebhookController {
       // 2. Dispatch response back to WhatsApp via WACloud
       await wacloudService.sendMessage(customerPhone, aiReply);
 
+      // 3. Return reply directly in webhook response (in case WACloud supports inline response)
+      return res.status(200).json({
+        status: 'success',
+        reply: aiReply,
+        message: aiReply,
+        to: customerPhone
+      });
+
     } catch (error) {
       console.error('❌ [Webhook Handler Error]:', error);
-      // Ensure error doesn't crash server
       if (!res.headersSent) {
         res.status(500).json({ error: 'Internal Server Error' });
       }

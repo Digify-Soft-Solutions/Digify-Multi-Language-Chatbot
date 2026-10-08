@@ -1,56 +1,74 @@
-// In-memory conversation history per phone number (retains last 10 turns)
-const conversationStore = new Map();
+// In-memory conversation and state store per customer phone number
+const sessionStore = new Map();
 
-const MAX_HISTORY = 10;
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 class MemoryService {
   /**
-   * Get conversation history for a given phone number
+   * Get full session for a given phone number
    */
-  getHistory(phoneNumber) {
-    const session = conversationStore.get(phoneNumber);
-    if (!session) return [];
-
-    // Expire old sessions
-    if (Date.now() - session.lastUpdated > SESSION_EXPIRY_MS) {
-      conversationStore.delete(phoneNumber);
-      return [];
-    }
-
-    return session.messages;
-  }
-
-  /**
-   * Append a message to a customer's history
-   * @param {string} phoneNumber
-   * @param {'user'|'assistant'} role
-   * @param {string} content
-   */
-  addMessage(phoneNumber, role, content) {
-    let session = conversationStore.get(phoneNumber);
+  getSession(phoneNumber) {
+    let session = sessionStore.get(phoneNumber);
     if (!session) {
       session = {
+        state: 'CHOOSING_LANGUAGE', // CHOOSING_LANGUAGE | CHOOSING_CATEGORY | AWAITING_QUERY | TICKET_CREATED
+        language: null,
+        category: null,
+        ticket: null,
         messages: [],
         lastUpdated: Date.now()
       };
-      conversationStore.set(phoneNumber, session);
+      sessionStore.set(phoneNumber, session);
+      return session;
     }
 
-    session.messages.push({ role, content });
-    session.lastUpdated = Date.now();
-
-    // Keep only the latest messages
-    if (session.messages.length > MAX_HISTORY) {
-      session.messages = session.messages.slice(-MAX_HISTORY);
+    // Expire old sessions
+    if (Date.now() - session.lastUpdated > SESSION_EXPIRY_MS) {
+      this.resetSession(phoneNumber);
+      return this.getSession(phoneNumber);
     }
+
+    return session;
   }
 
   /**
-   * Clear session for a user
+   * Update session state or attributes
    */
-  clearSession(phoneNumber) {
-    conversationStore.delete(phoneNumber);
+  updateSession(phoneNumber, updates) {
+    const session = this.getSession(phoneNumber);
+    Object.assign(session, updates, { lastUpdated: Date.now() });
+    sessionStore.set(phoneNumber, session);
+    return session;
+  }
+
+  /**
+   * Reset session back to beginning (when user presses 0)
+   */
+  resetSession(phoneNumber) {
+    sessionStore.set(phoneNumber, {
+      state: 'CHOOSING_LANGUAGE',
+      language: null,
+      category: null,
+      ticket: null,
+      messages: [],
+      lastUpdated: Date.now()
+    });
+  }
+
+  /**
+   * Append a message to conversation history
+   */
+  addMessage(phoneNumber, role, content) {
+    const session = this.getSession(phoneNumber);
+    session.messages.push({ role, content });
+    session.lastUpdated = Date.now();
+    if (session.messages.length > 10) {
+      session.messages = session.messages.slice(-10);
+    }
+  }
+
+  getHistory(phoneNumber) {
+    return this.getSession(phoneNumber).messages;
   }
 }
 

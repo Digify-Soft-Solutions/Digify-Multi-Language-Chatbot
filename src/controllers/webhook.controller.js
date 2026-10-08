@@ -71,9 +71,13 @@ class WebhookController {
     if (!text) {
       from = body.from || body.sender_id || body.phone || body.sender || body.data?.from;
 
-      // In WACloud, text can be an object: "text": { "body": "Hiee" }
+      // In WACloud, text can be an object or button/interactive
       if (typeof body.text === 'object' && body.text !== null && body.text.body) {
         text = body.text.body;
+      } else if (body.interactive) {
+        text = body.interactive?.button_reply?.id || body.interactive?.button_reply?.title || body.interactive?.list_reply?.id || body.interactive?.list_reply?.title;
+      } else if (body.button) {
+        text = body.button?.text || body.button?.payload;
       } else {
         text = body.message || body.text || body.body || body.data?.message || body.data?.body;
       }

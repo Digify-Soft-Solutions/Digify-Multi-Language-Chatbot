@@ -1,5 +1,7 @@
 const groqService = require('../services/groq.service');
 const wacloudService = require('../services/wacloud.service');
+const ticketService = require('../services/ticket.service');
+const erpService = require('../services/erp.service');
 const config = require('../config');
 
 class WebhookController {
@@ -24,7 +26,7 @@ class WebhookController {
 
     return res.status(200).json({
       status: 'active',
-      message: 'Digify Soft Solutions WhatsApp Webhook endpoint is running and ready!',
+      service: 'Digify Soft Solutions WhatsApp Webhook endpoint is running and ready!',
       businessNumber: config.whatsapp.businessNumber
     });
   }
@@ -71,7 +73,6 @@ class WebhookController {
     if (!text) {
       from = body.from || body.sender_id || body.phone || body.sender || body.data?.from;
 
-      // In WACloud, text can be an object or button/interactive
       if (typeof body.text === 'object' && body.text !== null && body.text.body) {
         text = body.text.body;
       } else if (body.interactive) {
@@ -89,7 +90,7 @@ class WebhookController {
       return null;
     }
 
-    // Clean phone number (strip @s.whatsapp.net if present)
+    // Clean phone number
     from = String(from).replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/[^0-9]/g, '');
 
     return { from, text: String(text).trim(), senderName, isStatusUpdate: false };
@@ -130,18 +131,41 @@ class WebhookController {
 
       console.log(`\n💬 [New Message from ${senderName} (Customer: ${recipientPhone})]: "${customerMessage}"`);
 
-      // 1. Process message through Groq AI (with multi-language detection & translation)
-      const aiReply = await groqService.generateReply(recipientPhone, customerMessage);
-      console.log(`🤖 [AI Reply to ${recipientPhone}]:\n${aiReply}\n`);
+      // 1. Create or update Ticket in Digify Customer Care Admin Store
+      const { ticket, erpResult } = await ticketService.createOrUpdateTicket({
+        customerPhone: recipientPhone,
+        senderName,
+        message: customerMessage,
+        channel: 'WhatsApp Webhook'
+      });
 
-      // 2. Dispatch response back to WhatsApp via WACloud
-      await wacloudService.sendMessage(recipientPhone, aiReply);
+      let finalReply = '';
 
-      // 3. Return reply directly in webhook response (in case WACloud supports inline response)
+      // 2. Check ERP Gatekeeping
+      if (erpService.isGatekeepingEnabled() && !erpResult.isAuthentic) {
+        // Customer is unauthorized
+        console.log(`🛑 Customer ${recipientPhone} is UNAUTHORIZED in ERP. Sending restricted access notice.`);
+        finalReply = erpService.getUnauthorizedNoticeMessage(senderName);
+        ticketService.addReply(ticket.id, finalReply, 'bot');
+        ticketService.updateTicketStatus(ticket.id, 'rejected');
+      } else {
+        // Customer is authentic or gatekeeping is bypassed -> Generate Multilingual AI Reply
+        console.log(`✨ Customer ${recipientPhone} is AUTHENTIC (${erpResult.client?.companyName || 'Verified'}). Dispatching AI assistance.`);
+        finalReply = await groqService.generateReply(recipientPhone, customerMessage);
+        ticketService.addReply(ticket.id, finalReply, 'bot');
+      }
+
+      console.log(`🤖 [Outgoing Response to ${recipientPhone}]:\n${finalReply}\n`);
+
+      // 3. Dispatch response back to WhatsApp via WACloud
+      await wacloudService.sendMessage(recipientPhone, finalReply);
+
+      // 4. Return reply in webhook response
       return res.status(200).json({
         status: 'success',
-        reply: aiReply,
-        message: aiReply,
+        ticketId: ticket.id,
+        isAuthentic: erpResult.isAuthentic,
+        reply: finalReply,
         to: recipientPhone
       });
 
@@ -150,6 +174,50 @@ class WebhookController {
       if (!res.headersSent) {
         res.status(500).json({ error: 'Internal Server Error' });
       }
+    }
+  }
+
+  /**
+   * POST /api/webhook/simulate
+   * Simulator endpoint to generate live tickets as if incoming from WhatsApp
+   */
+  async simulateWebhook(req, res) {
+    try {
+      const { phone = '919829012345', name = 'Pooja Mehta', message = 'Need help regarding software integration' } = req.body;
+
+      const payload = {
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'WHATSAPP_SIM_ENTRY',
+            changes: [
+              {
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: { display_phone_number: config.whatsapp.businessNumber, phone_number_id: '1092837465' },
+                  contacts: [{ profile: { name } }],
+                  messages: [
+                    {
+                      from: phone,
+                      id: `wamid.HBgL${Date.now()}`,
+                      timestamp: Math.floor(Date.now() / 1000).toString(),
+                      text: { body: message },
+                      type: 'text'
+                    }
+                  ]
+                },
+                field: 'messages'
+              }
+            ]
+          }
+        ]
+      };
+
+      req.body = payload;
+      return await this.handleIncomingWebhook(req, res);
+    } catch (error) {
+      console.error('❌ [Webhook Simulator Error]:', error);
+      res.status(500).json({ error: error.message });
     }
   }
 

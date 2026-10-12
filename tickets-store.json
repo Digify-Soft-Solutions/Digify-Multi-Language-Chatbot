@@ -1,0 +1,94 @@
+[
+  {
+    "id": "DIGI-TK-1001",
+    "customerPhone": "919829012345",
+    "senderName": "Vikram Sharma",
+    "channel": "WhatsApp",
+    "status": "in_progress",
+    "verificationStatus": "verified",
+    "erpClient": {
+      "id": "ERP-CLI-102",
+      "phone": "919829012345",
+      "name": "Vikram Sharma",
+      "companyName": "Sharma Enterprises & Logistics",
+      "plan": "Business Growth Suite",
+      "status": "active",
+      "validTill": "2027-05-15",
+      "services": [
+        "Multi-Language Chatbot",
+        "Billing Software"
+      ]
+    },
+    "lastMessage": "*Welcome to Digify Soft Solutions Customer Care* 🚀\n\nPlease select your preferred language:\n\n[ 1️⃣ ] English\n[ 2️⃣ ] हिंदी (Hindi)\n[ 3️⃣ ] मराठी (Marathi)\n[ 4️⃣ ] ગુજરાતી (Gujarati)\n[ 5️⃣ ] తెలుగు (Telugu)\n[ 6️⃣ ] தமிழ் (Tamil)\n[ 7️⃣ ] മലയാളം (Malayalam)\n\n👉 Reply with option number (1 - 7).\n*(Press 0 at any time to return to Main Menu)*",
+    "messages": [
+      {
+        "sender": "customer",
+        "text": "Namaste team, hamare logistics invoice me GST rate update karna hai. Help desk connect kijiye.",
+        "timestamp": "2026-10-12T03:05:36.003Z"
+      },
+      {
+        "sender": "bot",
+        "text": "Namaste Vikram ji! Aapka query receive ho gaya hai. Digify Care Support Ticket DIGI-TK-1001 create ho gaya hai. Ek executive aapse jald connect karega.",
+        "timestamp": "2026-10-12T03:06:36.005Z"
+      },
+      {
+        "sender": "customer",
+        "text": "Hello, logistics invoice me payment gateway integrate karna hai",
+        "timestamp": "2026-10-12T03:41:57.043Z"
+      },
+      {
+        "sender": "bot",
+        "text": "*Welcome to Digify Soft Solutions Customer Care* 🚀\n\nPlease select your preferred language:\n\n[ 1️⃣ ] English\n[ 2️⃣ ] हिंदी (Hindi)\n[ 3️⃣ ] मराठी (Marathi)\n[ 4️⃣ ] ગુજરાતી (Gujarati)\n[ 5️⃣ ] తెలుగు (Telugu)\n[ 6️⃣ ] தமிழ் (Tamil)\n[ 7️⃣ ] മലയാളം (Malayalam)\n\n👉 Reply with option number (1 - 7).\n*(Press 0 at any time to return to Main Menu)*",
+        "timestamp": "2026-10-12T03:41:57.046Z"
+      },
+      {
+        "sender": "customer",
+        "text": "Namaste, hamare Digify ERP system me new WhatsApp chatbot activate karna hai.",
+        "timestamp": "2026-10-12T03:52:57.094Z"
+      },
+      {
+        "sender": "bot",
+        "text": "*Welcome to Digify Soft Solutions Customer Care* 🚀\n\nPlease select your preferred language:\n\n[ 1️⃣ ] English\n[ 2️⃣ ] हिंदी (Hindi)\n[ 3️⃣ ] मराठी (Marathi)\n[ 4️⃣ ] ગુજરાતી (Gujarati)\n[ 5️⃣ ] తెలుగు (Telugu)\n[ 6️⃣ ] தமிழ் (Tamil)\n[ 7️⃣ ] മലയാളം (Malayalam)\n\n👉 Reply with option number (1 - 7).\n*(Press 0 at any time to return to Main Menu)*",
+        "timestamp": "2026-10-12T03:52:57.096Z"
+      },
+      {
+        "sender": "customer",
+        "text": "Hello from Next.js port 3000 test",
+        "timestamp": "2026-10-12T03:55:25.077Z"
+      },
+      {
+        "sender": "bot",
+        "text": "*Welcome to Digify Soft Solutions Customer Care* 🚀\n\nPlease select your preferred language:\n\n[ 1️⃣ ] English\n[ 2️⃣ ] हिंदी (Hindi)\n[ 3️⃣ ] मराठी (Marathi)\n[ 4️⃣ ] ગુજરાતી (Gujarati)\n[ 5️⃣ ] తెలుగు (Telugu)\n[ 6️⃣ ] தமிழ் (Tamil)\n[ 7️⃣ ] മലയാളം (Malayalam)\n\n👉 Reply with option number (1 - 7).\n*(Press 0 at any time to return to Main Menu)*",
+        "timestamp": "2026-10-12T03:55:25.081Z"
+      }
+    ],
+    "notes": "Client has active billing software module. Needs GST slab updated to 18%.",
+    "createdAt": "2026-10-12T03:05:36.005Z",
+    "updatedAt": "2026-10-12T03:55:25.081Z"
+  },
+  {
+    "id": "DIGI-TK-1003",
+    "customerPhone": "919988776655",
+    "senderName": "Unknown Visitor",
+    "channel": "WhatsApp",
+    "status": "rejected",
+    "verificationStatus": "unauthorized",
+    "erpClient": null,
+    "lastMessage": "Hello, mujhe free customer support chahiye aapke software ka.",
+    "messages": [
+      {
+        "sender": "customer",
+        "text": "Hello, mujhe free customer support chahiye aapke software ka.",
+        "timestamp": "2026-10-11T23:40:36.005Z"
+      },
+      {
+        "sender": "bot",
+        "text": "Namaste! Aap hamare registered user nahi hain. Digify Soft Solutions Customer Care access karne ke liye pehle hamari services lijiye, tabhi aap hamara customer care use kar payenge.",
+        "timestamp": "2026-10-11T23:40:36.005Z"
+      }
+    ],
+    "notes": "Unregistered phone. Sent ERP activation sales link.",
+    "createdAt": "2026-10-11T23:40:36.005Z",
+    "updatedAt": "2026-10-11T23:40:36.005Z"
+  }
+]

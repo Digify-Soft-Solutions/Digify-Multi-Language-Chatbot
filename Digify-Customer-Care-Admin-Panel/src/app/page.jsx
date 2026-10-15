@@ -110,9 +110,6 @@ export default function AdminDashboardPage() {
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
       // Tab based filter
-      if (activeTab === "pending" && ticket.status !== "new" && ticket.status !== "in_progress") {
-        return false;
-      }
       if (activeTab === "auth") {
         if (authSubFilter === "verified" && ticket.verificationStatus !== "verified") {
           return false;
@@ -404,13 +401,6 @@ export default function AdminDashboardPage() {
             <span>Customer Inquiries</span>
           </button>
           <button
-            className={`nav-tab-btn ${activeTab === "pending" ? "active" : ""}`}
-            onClick={() => setActiveTab("pending")}
-          >
-            <i className="fas fa-bell" />
-            <span>Action Required</span>
-          </button>
-          <button
             className={`nav-tab-btn ${activeTab === "auth" ? "active" : ""}`}
             onClick={() => setActiveTab("auth")}
           >
@@ -456,28 +446,6 @@ export default function AdminDashboardPage() {
                 <p className="page-subtitle">
                   Live omnichannel ticket stream connected to WhatsApp Webhook, AI Engine, and ERP Authenticity Gatekeeping.
                 </p>
-              </div>
-
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <button
-                  className="btn-secondary"
-                  onClick={() => {
-                    fetchTickets();
-                    showToast("Customer care tickets refreshed from live stream.");
-                  }}
-                  title="Sync live tickets from server"
-                >
-                  <i className="fas fa-rotate" style={{ color: "#0284c7" }} />
-                  <span>Refresh Stream</span>
-                </button>
-                <button className="btn-secondary" onClick={exportCSV} title="Export inquiries as CSV">
-                  <i className="fas fa-file-excel" style={{ color: "#16a34a" }} />
-                  <span>Export to CSV</span>
-                </button>
-                <button className="btn-primary" onClick={() => setActiveTab("simulator")}>
-                  <i className="fas fa-plus-circle" />
-                  <span>Simulate Incoming Query</span>
-                </button>
               </div>
             </div>
 

@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const erpService = require('./erp.service');
+const dbService = require('./db.service');
 
 const DATA_FILE = path.join(__dirname, '../../tickets-store.json');
 
@@ -22,12 +23,32 @@ class TicketService {
       if (fs.existsSync(DATA_FILE)) {
         const raw = fs.readFileSync(DATA_FILE, 'utf-8');
         this.tickets = JSON.parse(raw);
-        console.log(`📋 Loaded ${this.tickets.length} tickets from store.`);
-        return;
+        console.log(`📋 Loaded ${this.tickets.length} tickets from file store.`);
       }
     } catch (e) {
-      console.warn('Could not read tickets-store.json, initializing demo tickets:', e.message);
+      console.warn('Could not read tickets-store.json:', e.message);
     }
+
+    // Load/sync from PostgreSQL if available
+    setTimeout(async () => {
+      try {
+        const dbTickets = await dbService.getAllTickets();
+        if (dbTickets && dbTickets.length > 0) {
+          this.tickets = dbTickets;
+          this.saveTickets();
+          console.log(`🐘 Loaded ${dbTickets.length} tickets from PostgreSQL.`);
+        } else if (dbTickets && this.tickets.length > 0) {
+          for (const t of this.tickets) {
+            await dbService.saveTicket(t);
+          }
+          console.log(`🐘 Synced ${this.tickets.length} local tickets to PostgreSQL.`);
+        }
+      } catch (err) {
+        console.warn('DB sync warning:', err.message);
+      }
+    }, 1500);
+
+    return;
 
     // Default seed tickets for Digify Customer Care
     this.tickets = [
@@ -179,6 +200,7 @@ class TicketService {
       existingTicket.erpClient = erpResult.client;
       existingTicket.updatedAt = new Date().toISOString();
       this.saveTickets();
+      if (dbService.isConnected) dbService.saveTicket(existingTicket);
       this.broadcast('ticket_updated', existingTicket);
       return { ticket: existingTicket, isNew: false, erpResult };
     }
@@ -204,6 +226,7 @@ class TicketService {
 
     this.tickets.unshift(newTicket);
     this.saveTickets();
+    if (dbService.isConnected) dbService.saveTicket(newTicket);
     this.broadcast('ticket_created', newTicket);
     return { ticket: newTicket, isNew: true, erpResult };
   }
@@ -228,6 +251,7 @@ class TicketService {
     }
 
     this.saveTickets();
+    if (dbService.isConnected) dbService.saveTicket(ticket);
     this.broadcast('ticket_updated', ticket);
     return ticket;
   }
@@ -259,6 +283,7 @@ class TicketService {
 
     ticket.updatedAt = new Date().toISOString();
     this.saveTickets();
+    if (dbService.isConnected) dbService.saveTicket(ticket);
     this.broadcast('ticket_updated', ticket);
     return ticket;
   }
@@ -269,6 +294,7 @@ class TicketService {
     ticket.status = newStatus;
     ticket.updatedAt = new Date().toISOString();
     this.saveTickets();
+    if (dbService.isConnected) dbService.saveTicket(ticket);
     this.broadcast('ticket_updated', ticket);
     return ticket;
   }
@@ -279,6 +305,7 @@ class TicketService {
     ticket.notes = notes;
     ticket.updatedAt = new Date().toISOString();
     this.saveTickets();
+    if (dbService.isConnected) dbService.saveTicket(ticket);
     this.broadcast('ticket_updated', ticket);
     return ticket;
   }
@@ -288,6 +315,7 @@ class TicketService {
     if (idx === -1) return false;
     const removed = this.tickets.splice(idx, 1)[0];
     this.saveTickets();
+    if (dbService.isConnected) dbService.deleteTicket(ticketId);
     this.broadcast('ticket_deleted', { id: ticketId });
     return removed;
   }

@@ -141,19 +141,10 @@ class WebhookController {
 
       let finalReply = '';
 
-      // 2. Check ERP Gatekeeping
-      if (erpService.isGatekeepingEnabled() && !erpResult.isAuthentic) {
-        // Customer is unauthorized
-        console.log(`🛑 Customer ${recipientPhone} is UNAUTHORIZED in ERP. Sending restricted access notice.`);
-        finalReply = erpService.getUnauthorizedNoticeMessage(senderName);
-        ticketService.addReply(ticket.id, finalReply, 'bot');
-        ticketService.updateTicketStatus(ticket.id, 'rejected');
-      } else {
-        // Customer is authentic or gatekeeping is bypassed -> Generate Multilingual AI Reply
-        console.log(`✨ Customer ${recipientPhone} is AUTHENTIC (${erpResult.client?.companyName || 'Verified'}). Dispatching AI assistance.`);
-        finalReply = await groqService.generateReply(recipientPhone, customerMessage);
-        ticketService.addReply(ticket.id, finalReply, 'bot');
-      }
+      // 2. Generate Multilingual AI Reply (Language selection / customer support)
+      console.log(`✨ Generating AI assistance for ${recipientPhone} (${senderName})...`);
+      const finalReply = await groqService.generateReply(recipientPhone, customerMessage);
+      ticketService.addReply(ticket.id, finalReply, 'bot');
 
       console.log(`🤖 [Outgoing Response to ${recipientPhone}]:\n${finalReply}\n`);
 

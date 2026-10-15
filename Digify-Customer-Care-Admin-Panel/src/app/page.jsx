@@ -99,11 +99,10 @@ export default function AdminDashboardPage() {
     const newCount = tickets.filter((t) => t.status === "new").length;
     const inProgress = tickets.filter((t) => t.status === "in_progress").length;
     const resolved = tickets.filter((t) => t.status === "resolved").length;
-    const rejected = tickets.filter(
-      (t) => t.status === "rejected" || t.verificationStatus === "unauthorized"
-    ).length;
+    const rejected = tickets.filter((t) => t.status === "rejected").length;
+    const unidentified = tickets.filter((t) => t.verificationStatus === "unidentified" || (!t.verificationStatus && t.status !== "rejected")).length;
     const verified = tickets.filter((t) => t.verificationStatus === "verified").length;
-    return { total, newCount, inProgress, resolved, rejected, verified };
+    return { total, newCount, inProgress, resolved, rejected, unidentified, verified };
   }, [tickets]);
 
   // 4. Filtered Tickets
@@ -505,19 +504,19 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="kpi-card red">
+              <div className="kpi-card amber">
                 <div className="kpi-header">
-                  <span className="kpi-label">Unauthorized Queries</span>
-                  <div className="kpi-icon-badge">
-                    <i className="fas fa-user-slash" />
+                  <span className="kpi-label">Unidentified Guests</span>
+                  <div className="kpi-icon-badge" style={{ background: "#fef3c7", color: "#d97706" }}>
+                    <i className="fas fa-user-clock" />
                   </div>
                 </div>
-                <div className="kpi-value" style={{ color: "#dc2626" }}>
-                  {stats.rejected}
+                <div className="kpi-value" style={{ color: "#d97706" }}>
+                  {stats.unidentified}
                 </div>
-                <div className="kpi-footer" style={{ color: "#dc2626" }}>
-                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }} />
-                  <span>Restricted / Gatekeeper Blocked</span>
+                <div className="kpi-footer" style={{ color: "#d97706" }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#f59e0b" }} />
+                  <span>Guest / Pending Verification</span>
                 </div>
               </div>
             </div>
@@ -687,10 +686,23 @@ export default function AdminDashboardPage() {
                                 <span className="badge-dot" />
                                 ERP Verified
                               </span>
-                            ) : (
+                            ) : t.verificationStatus === "unauthorized" ? (
                               <span className="badge badge-unauthorized">
                                 <span className="badge-dot" />
                                 Unauthorized
+                              </span>
+                            ) : (
+                              <span
+                                className="badge"
+                                style={{
+                                  background: "#f1f5f9",
+                                  color: "#475569",
+                                  border: "1px solid #cbd5e1",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                <span className="badge-dot" style={{ background: "#64748b" }} />
+                                Unidentified
                               </span>
                             )}
                             {t.erpClient && (

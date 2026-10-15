@@ -1,44 +1,76 @@
 const axios = require('axios');
 const config = require('../config');
 
-// Default active token from session (overridden by process.env.WACLOUD_API_TOKEN)
-const DEFAULT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE0MTMsInVzZXJuYW1lIjoiRGlnaWZ5c29mdEJvdCIsImVtYWlsIjoiZ2F1dGFtYWxpazFAZ21haWwuY29tIiwibmFtZSI6IkdhdXRhbSAgTWFsaWsiLCJyb2xlIjoidXNlciIsInVzZXJ0eXBlIjoiY2xpZW50IiwidG9rZW5WZXJzaW9uIjoxLCJpYXQiOjE3OTE0MzY4MjMsImV4cCI6MTc5MjA0MTYyM30._x4n2yVyL-QF8rUkgYxKrS9h6D0h2tpfhvfPONZ-fZs';
+// Active token provided by DigifysoftBot session
+const DEFAULT_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3OTE0NjE1MjcsInZlciI6MiwiZGF0YSI6eyJ1c2VybmFtZSI6IkRpZ2lmeXNvZnRCb3QiLCJuYW1lIjoiRGlnaWZ5c29mdEJvdCJ9fQ.KdnZHSBPgIFQivVhFdhklkvD1WBn0BKpr9m1eJIOsaE';
 
 class WACloudService {
   /**
-   * Send WhatsApp message back to customer via WACloud / Nuke Team Inbox API
+   * Send WhatsApp message back to customer via WACloud / Nuke Session API
    * @param {string} to - Recipient phone number (e.g. 918233816674)
    * @param {string} text - Message content to send
    */
   async sendMessage(to, text) {
-    // Sanitize phone number (remove +, spaces, dashes)
     const cleanPhone = String(to).replace(/[^0-9]/g, '');
     const token = config.whatsapp.apiToken || DEFAULT_TOKEN;
 
-    const endpoint = `https://api.nuke.co.in/api/v1/whatsapp/teaminbox/${cleanPhone}/send`;
+    // Primary: AutoBotChat / WACloud v6 Session API
+    const sessionEndpoint = 'https://wa20.nuke.co.in/v6/api/whatsapp/24/DigifysoftBot/messages';
 
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Origin': 'https://wacloud.innuvissolutions.com',
-      'Referer': 'https://wacloud.innuvissolutions.com/',
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    const sessionPayload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: cleanPhone,
+      type: 'text',
+      text: {
+        preview_url: false,
+        body: text
+      }
     };
 
-    const payload = {
-      type: 'text',
-      text: text,
-      media_url: 'none'
+    const sessionHeaders = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     };
 
     try {
-      console.log(`📤 [WACloud Outbound] Dispatching message to ${cleanPhone}...`);
-      const response = await axios.post(endpoint, payload, { headers, timeout: 12000 });
-      console.log(`✅ [WACloud Outbound Success]: Message queued with ID:`, response.data?.data?.id || response.data);
+      console.log(`📤 [WACloud Outbound] Dispatching message to ${cleanPhone} via Session API...`);
+      const response = await axios.post(sessionEndpoint, sessionPayload, {
+        headers: sessionHeaders,
+        timeout: 12000
+      });
+
+      console.log(`✅ [WACloud Outbound Success]: Message queued with ID:`, response.data?.messages?.[0]?.id || response.data);
       return { success: true, data: response.data };
-    } catch (error) {
-      console.error(`❌ [WACloud Outbound Error] Failed to send to ${cleanPhone}:`, error.response?.data || error.message);
-      return { success: false, error: error.message };
+    } catch (sessionError) {
+      console.warn(`⚠️ [Session API Failed]: ${sessionError.response?.data?.error || sessionError.message}. Trying teaminbox fallback...`);
+
+      // Fallback: teaminbox endpoint
+      try {
+        const fallbackEndpoint = `https://api.nuke.co.in/api/v1/whatsapp/teaminbox/${cleanPhone}/send`;
+        const fallbackHeaders = {
+          'Authorization': `Bearer ${token}`,
+          'Origin': 'https://wacloud.innuvissolutions.com',
+          'Referer': 'https://wacloud.innuvissolutions.com/',
+          'Content-Type': 'application/json'
+        };
+        const fallbackPayload = {
+          type: 'text',
+          text: text,
+          media_url: 'none'
+        };
+
+        const fbRes = await axios.post(fallbackEndpoint, fallbackPayload, {
+          headers: fallbackHeaders,
+          timeout: 12000
+        });
+
+        console.log(`✅ [Fallback Outbound Success]:`, fbRes.data);
+        return { success: true, data: fbRes.data };
+      } catch (fallbackError) {
+        console.error(`❌ [WACloud Outbound Error] Failed to send to ${cleanPhone}:`, fallbackError.response?.data || fallbackError.message);
+        return { success: false, error: fallbackError.message };
+      }
     }
   }
 }

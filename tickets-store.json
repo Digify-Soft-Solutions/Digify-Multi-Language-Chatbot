@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "DIGI-TK-1001",
+    "customerPhone": "918233816674",
+    "senderName": "Kush Sharma✨",
+    "channel": "WhatsApp Webhook",
+    "status": "new",
+    "verificationStatus": "unauthorized",
+    "erpClient": null,
+    "lastMessage": "Hiee",
+    "messages": [
+      {
+        "text": "Hiee",
+        "sender": "customer",
+        "timestamp": "2026-10-15T06:17:18.403Z"
+      }
+    ],
+    "notes": "Unregistered phone. ERP check returned: Customer not found in Digify ERP database.",
+    "createdAt": "2026-10-15T06:17:18.403Z",
+    "updatedAt": "2026-10-15T06:17:18.403Z"
+  }
+]

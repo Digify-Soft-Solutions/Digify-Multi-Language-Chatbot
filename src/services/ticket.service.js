@@ -184,7 +184,7 @@ class TicketService {
 
     // Run ERP verification check
     const erpResult = await erpService.verifyCustomer(cleanedPhone);
-    const verificationStatus = erpResult.isAuthentic ? 'verified' : (erpResult.isExpired ? 'expired' : 'unauthorized');
+    const verificationStatus = erpResult.isAuthentic ? 'verified' : (erpResult.isExpired ? 'expired' : 'unidentified');
 
     const newMessageObj = {
       sender: 'customer',
@@ -219,7 +219,7 @@ class TicketService {
       messages: [newMessageObj],
       notes: erpResult.isAuthentic
         ? `Auto-verified with ERP (${erpResult.client.companyName}).`
-        : `Unregistered phone. ERP check returned: ${erpResult.message}`,
+        : `New guest inquiry. Pending verification.`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

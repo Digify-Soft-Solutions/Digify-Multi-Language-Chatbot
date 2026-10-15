@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const BACKEND_URL = process.env.BACKEND_API_URL || 'https://digify-multi-language-chatbot.onrender.com';
+
 const nextConfig = {
   reactStrictMode: false,
   async rewrites() {
@@ -9,7 +11,7 @@ const nextConfig = {
       },
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:5000/api/:path*',
+        destination: `${BACKEND_URL}/api/:path*`,
       },
     ];
   },
